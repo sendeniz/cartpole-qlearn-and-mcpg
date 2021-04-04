@@ -2,6 +2,8 @@ import gym
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from collections import deque
+
 env = gym.make('CartPole-v0')
 # Prepare the Q Table
 # create one bucket for each of the 4 feature
@@ -52,6 +54,10 @@ learning_schedule_off_1 = []
 learning_schedule_off_2 = []
 learning_schedule_off_3 = []
 
+last_100_rewards = deque(maxlen=100)
+avg_100_reward = []
+avg_reward = []
+
 def pick_action(state, q_table, action_space, epsilon):
     # chance that a random action will be chosen
     if np.random.random_sample() < epsilon: 
@@ -84,8 +90,8 @@ n_episodes = 250
 n_time_steps = 200
 # initalize boolian to use learning schedule or not
 schedule_switch = [0, 1, 2, 3]
-
 for on_off in range(len(schedule_switch)):
+    np.random.seed(1486438)
     use_schedule = schedule_switch[on_off]
     for i_episode in range(n_episodes):
         epsilon = learning_schedule(i_episode, use_schedule)[0]
@@ -114,31 +120,58 @@ for on_off in range(len(schedule_switch)):
             state = next_state
             if done and use_schedule == 0:
                 learning_schedule_on.append(rewards)
-                print('Learning Schedule On: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
+                avg_reward.append(np.mean(learning_schedule_on))
+                last_100_rewards.append(rewards)
+                avg_100_reward.append(np.mean(last_100_rewards))
+                #print('Decreasing epsil.: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
                 break
             elif done and use_schedule == 1:
                 learning_schedule_off_1.append(rewards)
-                print('Learning Schedule Off 1: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
+                #print('Large epsil.: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
                 break
             elif done and use_schedule == 2:
                 learning_schedule_off_2.append(rewards)
-                print('Learning Schedule Off 2: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
+                #print('Medium epsil.: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
                 break
             elif done and use_schedule == 3:
                 learning_schedule_off_3.append(rewards)
-                print('Learning Schedule Off 3: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
+                #print('Small epsil.: Episode finished after {} timesteps, total rewards {}'.format(t+1, rewards))
                 break
     env.close()
 
+# Plot model comparison
 plt.figure(figsize=(8, 6))
-plt.plot(learning_schedule_on, linewidth=2)
-plt.plot(learning_schedule_off_1, linewidth=2)
-plt.plot(learning_schedule_off_2, linewidth=2)
-plt.plot(learning_schedule_off_3, linewidth=2)
-plt.title('Total Reward after each Episode', fontsize = 20)
-plt.xlabel('Number of Episodes', fontsize = 18)
-plt.ylabel('Total Reward', fontsize = 18)
-plt.legend(['Model 1 ', 'Model 2 ', 'Model 3 ', 'Model 4', 'Model 5' ], 
+plt.plot(learning_schedule_on, linewidth=1.5)
+plt.plot(learning_schedule_off_1, linewidth=1.5)
+plt.plot(learning_schedule_off_2, linewidth=1.5)
+plt.plot(learning_schedule_off_3, linewidth=1.5)
+plt.title('Q-Table: Total Reward after each episode', fontsize = 20)
+plt.xlabel('Number of episodes', fontsize = 18)
+plt.ylabel('Total reward', fontsize = 18)
+plt.legend([r'decrease $\epsilon$', r'large $\epsilon$', r'medium $\epsilon$', r'small $\epsilon$'], 
             prop={'size': 18}, frameon=False)
 plt.show()
 
+def running_mean(x):
+    x = np.array(x)
+    N=100
+    kernel = np.ones(N)
+    conv_len = x.shape[0]-N
+    y = np.zeros(conv_len)
+    for i in range(conv_len):
+        y[i] = kernel @ x[i:i+N]
+        y[i] /= N
+    return y
+
+# Plot model comparison
+plt.figure(figsize=(8, 6))
+plt.plot(running_mean(learning_schedule_on), linewidth=1.5)
+plt.plot(running_mean(learning_schedule_off_1), linewidth=1.5)
+plt.plot(running_mean(learning_schedule_off_2), linewidth=1.5)
+plt.plot(running_mean(learning_schedule_off_3), linewidth=1.5)
+plt.title('Q-Table: Mean last 100 rewards per episode', fontsize = 20)
+plt.xlabel('Number of episodes', fontsize = 18)
+plt.ylabel('Mean Reward', fontsize = 18)
+plt.legend([r'decrease $\epsilon$', r'large $\epsilon$', r'medium $\epsilon$', r'small $\epsilon$'], 
+            prop={'size': 18}, frameon=False)
+plt.show()

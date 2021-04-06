@@ -12,7 +12,7 @@ Deep Q-learning:
     
     Files for the DQN require the keras tensorflow package and !pip install keras-layer-normalization should be run to make sure Layer Normalisation is installed. 
     
-    DeepQlearning_Experiments.py runs models to fine-tune the neural network hyperparameters. Three models for the number of hidden layers, four models to determine which activation function to use and three models to regarding model regularization.
+    DeepQlearning_Experiments.py runs models to fine-tune the neural network hyperparameters. Three models for the number of hidden layers, four models to determine which activation function to use and three models regarding model regularization.
 
 
 
